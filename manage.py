@@ -1,8 +1,9 @@
 # -*- coding:utf-8 -*-
 
+import redis
 from flask import Flask,session
 from flask_sqlalchemy import SQLAlchemy
-import redis
+from config import Config
 from flask_wtf.csrf import CSRFProtect
 from flask_session import Session
 # from flask_script import Manager
