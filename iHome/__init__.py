@@ -24,3 +24,11 @@ def create_app(config_name):
 
     return app
 
+def create_app(config_name):
+    from iHome.api_1_0 import api
+    app.register_blueprint(api,url_prefix='/api/v1.0')
+
+    import web_html
+    app.register_blueprint(web_html.html)
+
+    return app
