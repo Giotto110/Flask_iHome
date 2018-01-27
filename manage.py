@@ -3,9 +3,13 @@
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 import redis
+from flask_wtf.csrf import CsrfProtect
 
 
 class Config(object):
+
+    SECRET_KEY = 'yJYu8Wf6/RdeJAye1ad4K238EXD+VHmdYKJ88qHYG02O0XqhvaEODrhxXwNQBtvb'
+
     DEBUG = True
 
     SQLAlchemy_DATABASE_URI = "mysql://root:mysql@127.0.0.1:3306/ihome"
@@ -22,7 +26,9 @@ db = SQLAlchemy(app)
 
 redis_store = redis.StrictRedis(host=Config.REDIS_HOST,port=Config.REDIS_PORT)
 
-@app.route('/')
+CsrfProtect(app)
+
+@app.route('/',methods=["GET","POST"])
 def index():
     # redis_store.set("name","laowang")
     return 'index'
