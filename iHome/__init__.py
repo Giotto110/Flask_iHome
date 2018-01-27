@@ -23,3 +23,4 @@ def create_app(config_name):
     Session(app)
 
     return app
+
