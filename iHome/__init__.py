@@ -30,4 +30,7 @@ def create_app(config_name):
     from iHome.api_1_0 import api
     app.register_blueprint(api)
 
+    from iHome.web_html import html
+    app.register_blueprint(html)
+
     return app
