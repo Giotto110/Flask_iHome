@@ -7,7 +7,7 @@ from config import Config
 from flask_wtf.csrf import CSRFProtect
 from flask_session import Session
 from config import config
-
+from iHome.utils.commons import RegexConverter
 
 db = SQLAlchemy()
 
@@ -26,6 +26,7 @@ def create_app(config_name):
 
     Session(app)
 
+    app.url_map.converters["re"] = RegexConverter
 
     from iHome.api_1_0 import api
     app.register_blueprint(api)

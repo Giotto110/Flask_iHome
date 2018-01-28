@@ -5,7 +5,11 @@ from flask import Blueprint,current_app
 html = Blueprint("html", __name__)
 
 
-@html.route(("/<file_name>"))
+@html.route(("/<re('.*'):/file_name>"))
 def get_html_file(file_name):
-   file_name = "html/" + file_name
-   return current_app.send_static_file(file_name)
+
+    if not file_name:
+        file_name = "index.html"
+
+    file_name = "html/" + file_name
+    return current_app.send_static_file(file_name)
