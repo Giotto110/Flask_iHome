@@ -16,9 +16,19 @@ function generateUUID() {
     return uuid;
 }
 var imageCodeId = ""
+var preImageCodeId = ""
 // 生成一个图片验证码的编号，并设置页面中图片验证码img标签的src属性
 function generateImageCode() {
-    
+
+    // 生成图片的uuid（图片编号）
+    imageCodeId = generateUUID()
+
+    // 生成url
+    var url = "/api/v1.0/image_code?cur_id=" + imageCodeId + "&pre_id=" + preImageCodeId
+    // 给图片验证码的img标签设置url
+    $(".image-code>img").attr("src", url)
+    // 记录当前这一次的编码，以便下一次请求的时候使用
+    preImageCodeId = imageCodeId
 }
 
 function sendSMSCode() {
