@@ -1,6 +1,6 @@
 # -*- coding:utf-8 -*-
 
-
+import logging
 import redis
 
 
@@ -19,7 +19,7 @@ class Config(object):
     SESSION_REDIS = redis.StrictRedis(host=REDIS_HOST, port=REDIS_PORT)
     SESSION_USE_SIGNER = True
     PERMANENT_SESSION_LIFETIME = 86400 * 2
-
+    LOGGING_LEVEL = logging.DEBUG
 
 class DevelopmentConfig(Config):
     DEBUG = True
@@ -28,6 +28,7 @@ class DevelopmentConfig(Config):
 class ProductionConfig(Config):
     SQLALCHEMY_DATABASE_URI = "mysql://root:mysql@127.0.0.1:3306/ihome2"
 
+    LOGGING_LEVEL = logging.WARN
 
 class TestingConfig(Config):
     TESTING = True
