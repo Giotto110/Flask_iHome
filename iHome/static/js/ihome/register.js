@@ -50,18 +50,13 @@ function sendSMSCode() {
         $(".phonecode-a").attr("onclick", "sendSMSCode();");
         return;
     }
-
-    // 通过ajax方式向后端接口发送请求，让后端发送短信验证码
-    var params = {
-        "mobile": mobile,
-        "image_code": imageCode,
-        "image_code_id": imageCodeId
-    }
-
     $.ajax({
         url: "/api/v1.0/sms_code",  // 请求地址
         type: "post",               // 请求方式
-        data: JSON.stringify(params),// 请求参数
+        data: JSON.stringify(params), // 请求参数
+        header:{
+            "X-CSRFToken": getCookie("csrf_token")
+        },
         contentType: "application/json",// 请求参数的数据类型
         success: function (resp) {
             if (resp.errno == "0") {
@@ -70,7 +65,7 @@ function sendSMSCode() {
                 var num = 60
 
                 var t = setInterval(function () {
-                    if (num ==0) {
+                    if (num == 0) {
                         // 代表倒计时完成
                         // 清除定时器
                         clearInterval(t)
@@ -78,7 +73,7 @@ function sendSMSCode() {
                         $(".phonecode-a").html("获取验证码")
                         // 把点击事件添加回去
                         $(".phonecode-a").attr("onclick", "sendSMSCode();");
-                    }else {
+                    } else {
                         // 正在倒计时
                         // 去设置倒计时的秒数
                         $(".phonecode-a").html(num + "秒")
@@ -87,7 +82,7 @@ function sendSMSCode() {
                     num = num - 1
                 }, 1000)
 
-            }else {
+            } else {
                 // 把点击事件添加回去
                 $(".phonecode-a").attr("onclick", "sendSMSCode();");
                 // 重新生成图片验证码
@@ -95,7 +90,15 @@ function sendSMSCode() {
                 alert(resp.errmsg)
             }
         }
-    })
+    });
+
+
+    // 通过ajax方式向后端接口发送请求，让后端发送短信验证码
+    var params = {
+        "mobile": mobile,
+        "image_code": imageCode,
+        "image_code_id": imageCodeId
+    }
 }
 
 $(document).ready(function() {
