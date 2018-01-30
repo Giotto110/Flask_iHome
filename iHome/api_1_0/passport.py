@@ -35,14 +35,16 @@ def register():
     user = User()
     user.mobile = mobile
     user.name = mobile
-    # TODO save password
+    # save password
+    user.password = password
 
-    # try:
-    #     db.session.add(user)
-    #     db.session.commit()
-    # except Exception as e:
-    #     db.session.rollback()
-    #     current_app.logger.error(e)
-    #     return jsonify(errno=RET.DBERR,errmsg="保存用户数据失败")
+
+    try:
+        db.session.add(user)
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(e)
+        return jsonify(errno=RET.DBERR,errmsg="保存用户数据失败")
 
     return jsonify(errno=RET.OK,errmsg="注册成功")
