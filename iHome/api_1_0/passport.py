@@ -77,6 +77,10 @@ def register():
     if phonecode != real_phonecode:
         return jsonify(errno=RET.DATAERR, errmsg="短信验证码输入错误")
 
+    #  3.1 判断当前手机是否已被注册
+    if User.query.filter(User.mobile == mobile).first:
+        return  jsonify(errno=RET.DATAEXIST,errmsg="该手机号已被注册")
+
     # 4. 初始化User模型，保存相关数据
     user = User()
     user.mobile = mobile
