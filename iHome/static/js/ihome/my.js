@@ -12,7 +12,7 @@ function logout() {
             "X-CSRFToken": getCookie("csrf_token")
         },
         success: function (resp) {
-            location.href = "/index.html"
+            location.href = "/"
         }
     })
 }
@@ -26,6 +26,8 @@ $(document).ready(function(){
             $("#user-avatar").attr("src", resp.data.avatar_url)
             $("#user-name").html(resp.data.name)
             $("#user-mobile").html(resp.data.mobile)
+        }else if (resp.errno == "4101") {
+            location.href = "/"
         }else {
             alert(resp.errmsg)
         }

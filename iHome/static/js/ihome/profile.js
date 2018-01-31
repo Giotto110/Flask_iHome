@@ -1,8 +1,9 @@
 function showSuccessMsg() {
-    $('.popup_con').fadeIn('fast', function() {
-        setTimeout(function(){
-            $('.popup_con').fadeOut('fast',function(){}); 
-        },1000) 
+    $('.popup_con').fadeIn('fast', function () {
+        setTimeout(function () {
+            $('.popup_con').fadeOut('fast', function () {
+            });
+        }, 1000)
     });
 }
 
@@ -13,17 +14,19 @@ function getCookie(name) {
 
 $(document).ready(function () {
     // 在页面加载完毕向后端查询用户的信息
-    $.get('/api/v1.0/user',function (resp) {
+    $.get('/api/v1.0/user', function (resp) {
         console.log(resp)
-        if (resp.errno == "0"){
+        if (resp.errno == "0") {
             $("#user-avatar").attr("src", resp.data.avatar_url)
             $("#user-name").val(resp.data.name)
-        }else {
+        } else if (resp.errno == "4101") {
+            location.href = "/"
+        } else {
             alert(resp.errmsg)
         }
     })
     //  管理上传用户头像表单的行为
-   // 管理上传用户头像表单的行为
+    // 管理上传用户头像表单的行为
     $("#form-avatar").submit(function (e) {
         e.preventDefault()
 
@@ -38,9 +41,11 @@ $(document).ready(function () {
                 if (resp.errno == "0") {
                     // 展示数据
                     $("#user-avatar").attr("src", resp.data.avatar_url)
-                }else if(resp.errno == "4101") {
+                } else if (resp.errno == "4101") {
                     location.href = "/login.html"
-                }else {
+                } else if (resp.errno == "4101") {
+                    location.href = "/"
+                } else {
                     alert(resp.errmsg)
                 }
             }
@@ -53,24 +58,24 @@ $(document).ready(function () {
 
         var name = $("#user-name").val()
 
-        if(!name){
+        if (!name) {
             alert("请输入用户名")
             return
         }
         $.ajax({
-            url:"/api/v1.0/user/name",
-            type:"post",
+            url: "/api/v1.0/user/name",
+            type: "post",
             headers: {
                 "X-CSRFToken": getCookie("csrf_token")
             },
-            data:JSON.stringify({"name":name}),
-            contentType:"application/json",
-            success:function (resp) {
-                if (resp.errno == "0"){
+            data: JSON.stringify({"name": name}),
+            contentType: "application/json",
+            success: function (resp) {
+                if (resp.errno == "0") {
                     showSuccessMsg()
-                }else if (resp.errno == "4101"){
-                    location.href = "/login.html"
-                }else{
+                } else if (resp.errno == "4101") {
+                    location.href = "/"
+                } else {
                     $(".error-msg").show()
                 }
             }
