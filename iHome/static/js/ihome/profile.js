@@ -15,6 +15,12 @@ $(document).ready(function () {
     // 在页面加载完毕向后端查询用户的信息
     $.get('/api/v1.0/user',function (resp) {
         console.log(resp)
+        if (resp.errno == "0"){
+            $("#user-avatar").attr("src", resp.data.avatar_url)
+            $("#user-name").val(resp.data.name)
+        }else {
+            alert(resp.errmsg)
+        }
     })
     // TODO: 管理上传用户头像表单的行为
 
