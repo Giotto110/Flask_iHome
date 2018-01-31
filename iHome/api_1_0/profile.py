@@ -1,12 +1,43 @@
 # -*- coding:utf-8 -*-
+import user
+
 from flask import current_app, jsonify
+from flask import request
 from flask import session
 
+from iHome import constants
+from iHome import db
 from iHome.models import User
 from . import api
 from iHome.utils.response_code import RET
+from iHome.utils.image_storage import upload_image
 
 
+
+@api.route('/user/avatar',methods=['POST'])
+def set_user_avatar():
+    try:
+        avatar_data = request.files.get("avatar").read()
+    except Exception as e:
+        current_app.logger.error(e)
+        return jsonify(errno=RET.DATAERR,errmsg="获取文件失败")
+    try:
+        key = upload_image(avatar_data)
+    except Exception as e:
+        current_app.logger.error(e)
+        return jsonify(errno=RET.DBERR,errmsg="用户不存在")
+
+    user.avatar_url = key
+
+    try:
+        db.session.commit()
+    except Exception as e:
+        current_app.logger.error(e)
+        db.session.rollback()
+        return jsonify(errno=RET.DBERR,errmsg="保存数据失败")
+
+    avatar_url = constants.QINIU_DOMIN_PREFIX + key
+    return jsonify(errno=RET.OK,errmsg="上传",data={"avatar_url":avatar_url})
 
 @api.route('/user')
 def get_user_info():
