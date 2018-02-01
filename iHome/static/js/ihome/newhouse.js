@@ -51,6 +51,7 @@ $(document).ready(function () {
                 if (resp.errno == "0"){
                     $("#form-house-info").hide()
                     $("#form-house-image").show()
+                    $("#house-id").val(resp.data.house_id)
                 }
             }
         })

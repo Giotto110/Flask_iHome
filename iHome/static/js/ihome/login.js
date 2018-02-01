@@ -3,50 +3,53 @@ function getCookie(name) {
     return r ? r[1] : undefined;
 }
 
-$(document).ready(function () {
-    $("#mobile").focus(function () {
+$(document).ready(function() {
+    $("#mobile").focus(function(){
         $("#mobile-err").hide();
     });
-    $("#password").focus(function () {
+    $("#password").focus(function(){
         $("#password-err").hide();
     });
     // 添加登录表单提交操作
-    $(".form-login").submit(function (e) {
+    $(".form-login").submit(function(e){
         e.preventDefault();
+        // 取值
         mobile = $("#mobile").val();
-        passwd = $("#password").val();
+        password = $("#password").val();
         if (!mobile) {
             $("#mobile-err span").html("请填写正确的手机号！");
             $("#mobile-err").show();
             return;
         }
-        if (!passwd) {
+        if (!password) {
             $("#password-err span").html("请填写密码!");
             $("#password-err").show();
             return;
         }
 
-        // var params = {
-        //     "mobile": mobile,
-        //     "password": passwd,
-        // }
-        var params = {}
-        $(this).serializeArray().map(function (x) {
-            params[x.name] = x.value
-        })
+        var params = {
+            "mobile": mobile,
+            "password": password
+        }
 
+        // console.log($(this).serializeArray()) // [{"mobile": "18811110000", "password": "123456"}]
+        // $(this).serializeArray().map(function (x) {
+        //     console.log(x)
+        // })
+
+        // 发起请求
         $.ajax({
             url: "/api/v1.0/session",
-            method: "post",
+            type: "post",
+            data: JSON.stringify(params),
+            contentType: "application/json",
             headers: {
                 "X-CSRFToken": getCookie("csrf_token")
             },
-            data: JSON.stringify(params),
-            contentType: "application/json",
             success: function (resp) {
                 if (resp.errno == "0") {
-                    location.href = "/index.html"
-                } else {
+                    location.href = "/"
+                }else {
                     $("#password-err span").html(resp.errmsg)
                     $("#password-err").show()
                 }
