@@ -9,7 +9,7 @@ from iHome.utils.response_code import RET
 @api.route("/areas")
 def get_areas():
     try:
-        areas = Area.querry.all()
+        areas = Area.query.all()
     except Exception as e:
         current_app.logger.error(e)
         return jsonify(errno=RET.DBERR,errmsg="查询数据失败")
