@@ -13,6 +13,28 @@ from iHome.utils.image_storage import upload_image
 from . import api
 
 
+@api.route('/user/auth')
+@login_required
+def get_user_auth():
+    user_id = g.user_id
+
+    try:
+        user = User.query.get(user_id)
+    except Exception as e:
+        current_app.logger.error(e)
+        return jsonify(errno=RET.DBERR,errmsg="查询数据失败")
+
+    if not user:
+        return jsonify(error=RET.NODATA,errmsg="用户不存在")
+
+    resp = {
+        "real_name":user.real_name,
+        "id_card":user.id_card
+    }
+
+    return jsonify(errno=RET.OK,errmsg="ok",data=resp)
+
+
 @api.route('/user/auth', methods=["POST"])
 @login_required
 def set_user_auth():
