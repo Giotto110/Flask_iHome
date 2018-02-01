@@ -1,62 +1,43 @@
 # -*- coding:utf-8 -*-
+from flask import current_app, jsonify
 from flask import g
+from flask import request
+from flask import session
 
-from iHome import constants
 from iHome import db
-from . import api
-from flask import request, current_app, jsonify, session
 from iHome.models import User
-from iHome.utils.response_code import RET
-from iHome.utils import image_storage
+from iHome import constants
 from iHome.utils.commons import login_required
-
-
-@api.route('/user/auth')
-@login_required
-def get_user_auth():
-    """
-    1. 取到当前登录用户id
-    2. 通过id查找到当前用户
-    3. 获取当前用户的认证信息
-    4. 返回信息
-    :return:
-    """
-
-    user_id = g.user_id
-
-    try:
-        user = User.query.get(user_id)
-    except Exception as e:
-        current_app.logger.error(e)
-        return jsonify(errno=RET.DBERR, errmsg="查询数据失败")
-
-    if not user:
-        return jsonify(errno=RET.USERERR, errmsg="用户不存在")
-
-    return jsonify(errno=RET.OK, errmsg="ok", data=user.to_auth_info())
+from iHome.utils.response_code import RET
+from iHome.utils.image_storage import upload_image
+from . import api
 
 
 @api.route('/user/auth', methods=["POST"])
 @login_required
 def set_user_auth():
     """
-    1. 取到当前登录用户id
-    2. 取到传过来的认证的信息
-    3. 通过id查找到当前用户
-    4. 更新用户的认证信息
-    5. 保存到数据库
-    6. 返回结果
+    设置用户实名认证信息
+    1. 获取参数，并判断参数是有值
+    2. 查询出当前用户的模型
+    3. 更新模型
+    4. 保存到数据库
+    5. 返回响应
     :return:
     """
+    pass
 
-    # 1. 取到当前登录用户id
-    user_id = g.user_id
-    # 2. 取到传过来的认证的信息
+    # 1. 获取参数，并判断参数是有值
     data_dict = request.json
     real_name = data_dict.get("real_name")
     id_card = data_dict.get("id_card")
 
-    # 3. 通过id查找到当前用户
+    if not all([real_name, id_card]):
+        return jsonify(errno=RET.PARAMERR, errmsg="参数错误")
+
+    # 2. 查询出当前用户的模型
+    user_id = g.user_id
+
     try:
         user = User.query.get(user_id)
     except Exception as e:
@@ -64,54 +45,64 @@ def set_user_auth():
         return jsonify(errno=RET.DBERR, errmsg="查询数据失败")
 
     if not user:
-        return jsonify(errno=RET.USERERR, errmsg="用户不存在")
+        return jsonify(errno=RET.NODATA, errmsg="用户不存在")
 
-    # 4. 更新用户的认证信息
+    # 3. 更新模型
     user.real_name = real_name
     user.id_card = id_card
 
-    # 5. 保存到数据库
+    # 4. 保存到数据库
+
     try:
         db.session.commit()
     except Exception as e:
         current_app.logger.error(e)
         db.session.rollback()
-        return jsonify(errno=RET.DBERR, errmsg="保存数据失败")
+        return jsonify(errno=RET.DBERR, errmsg="数据保存失败")
 
-    return jsonify(errno=RET.OK, errmsg="OK")
+    # 5. 返回响应
+    return jsonify(errno=RET.OK, errmsg="保存成功")
+
+
+
 
 
 @api.route('/user/name', methods=["POST"])
 @login_required
 def set_user_name():
     """
+    修改用户名
     0. 判断用户是否登录
-    1. 获取到传入参数
-    2. 将用户名信息更新到当前用户的模型中
-    3. 返回结果
+    1. 获取传过来的用户名，并判断是否有值
+    2. 查询到当前登录用户
+    3. 更新当前登录用户的模型
+    4. 并保存到数据库
+    5. 返回响应
     :return:
     """
 
-    # 1. 获取到传入参数
-    data_dict = request.json
-    name = data_dict.get("name")
-    if not name:
-        return jsonify(errno=RET.PARAMERR, errmsg="参数不完整")
+    # 1. 获取传过来的用户名，并判断是否有值
+    user_name = request.json.get("name")
+    if not user_name:
+        return jsonify(errno=RET.PARAMERR, errmsg="参数错误")
 
-    # 2. 获取当前登录用户的信息
+    # 2. 查询到当前登录用户
+    # user_id = session.get("user_id")
     user_id = g.user_id
 
     try:
         user = User.query.get(user_id)
     except Exception as e:
         current_app.logger.error(e)
-        return jsonify(errno=RET.DBERR, errmsg="获取用户信息失败")
+        return jsonify(errno=RET.DBERR, errmsg="查询数据出错")
 
     if not user:
-        return jsonify(errno=RET.USERERR, errmsg="用户不存在")
+        return jsonify(errno=RET.NODATA, errmsg="当前用户不存在")
 
-    # 更新数据
-    user.name = name
+    # 3. 更新当前登录用户的模型
+    user.name = user_name
+
+    # 4. 并保存到数据库
     try:
         db.session.commit()
     except Exception as e:
@@ -119,64 +110,63 @@ def set_user_name():
         db.session.rollback()
         return jsonify(errno=RET.DBERR, errmsg="保存数据失败")
 
-    # 将 session 中保存的数据进行实时更新
-    session["name"] = name
-
-    # 返回结果
-    return jsonify(errno=RET.OK, errmsg="OK")
+    # 5. 返回响应
+    return jsonify(errno=RET.OK, errmsg="保存成功")
 
 
-@api.route('/user/avatar', methods=['POST'])
+@api.route('/user/avatar', methods=["POST"])
 @login_required
-def set_user_avatar():
+def upload_avatar():
     """
-    0. TODO 判断用户是否登录
-    1. 获取到上传的文件
-    2. 再将文件上传到七牛云
-    3. 将头像信息更新到当前用户的模型中
-    4. 返回上传的结果<avatar_url>
+    上传用户头像
+    0. 判断用户是否登录
+    1. 获取到上传的图片文件
+    2. 判断图片文件是否存在
+    3. 上传图片文件到七牛云
+    4. 上传成功之后，保存到用户表的头像字段中
+    5. 返回响应，带上头像地址
     :return:
     """
 
-    # 0. 判断用户是否登录
+    # 1. 获取到上传的图片文件 / 2. 判断图片文件是否存在
+    try:
+        avatar_data = request.files.get("avatar").read()
+    except Exception as e:
+        current_app.logger.error(e)
+        return jsonify(errno=RET.DATAERR, errmsg="请取文件失败")
+
+    # 3. 上传图片文件到七牛云
+    try:
+        key = upload_image(avatar_data)
+    except Exception as e:
+        current_app.logger.error(e)
+        return jsonify(errno=RET.THIRDERR, errmsg="上传图片失败")
+
+    # 4. 上传成功之后，保存到用户表的头像字段中
+    # user_id = session.get("user_id")
     user_id = g.user_id
-
-    # 1. 获取到上传的文件
-    try:
-        avatar_file = request.files.get("avatar").read()
-    except Exception as e:
-        current_app.logger.error(e)
-        return jsonify(errno=RET.PARAMERR, errmsg="参数错误")
-
-    # 2. 再将文件上传到七牛云
-    try:
-        url = storage_image(avatar_file)
-    except Exception as e:
-        current_app.logger.error(e)
-        return jsonify(errno=RET.THIRDERR, errmsg="上传图片错误")
-
-    # 3. 将头像信息更新到当前用户的模型中
     try:
         user = User.query.get(user_id)
     except Exception as e:
         current_app.logger.error(e)
-        return jsonify(errno=RET.DBERR, errmsg="获取用户数据错误")
+        return jsonify(errno=RET.DBERR, errmsg="查询数据失败")
 
     if not user:
-        return jsonify(errno=RET.USERERR, errmsg="用户不存在")
+        return jsonify(errno=RET.NODATA, errmsg="用户不存在")
 
-    # 设置用户模型相关数据
-    user.avatar_url = url
-    # 将数据保存到数据库
+    # 设置值到用户模型身上数据
+    user.avatar_url = key
+
     try:
         db.session.commit()
     except Exception as e:
         current_app.logger.error(e)
         db.session.rollback()
-        return jsonify(errno=RET.DBERR, errmsg="保存用户数据错误")
+        return jsonify(errno=RET.DBERR, errmsg="保存数据失败")
 
-    # 4. 返回上传的结果<avatar_url>
-    return jsonify(errno=RET.OK, errmsg="OK", data={"avatar_url": constants.QINIU_DOMIN_PREFIX + url})
+    # 5. 返回响应，带上头像地址
+    avatar_url = constants.QINIU_DOMIN_PREFIX + key
+    return jsonify(errno=RET.OK, errmsg="上传成功", data={"avatar_url": avatar_url})
 
 
 @api.route('/user')
@@ -184,19 +174,31 @@ def set_user_avatar():
 def get_user_info():
     """
     获取用户信息
-    1. 获取到当前登录的用户模型
-    2. 返回模型中指定内容
+    0. 判断当前用户是否登录
+    1. 取到当前登录用户的id
+    2. 查询出指定的用户信息
+    3. 组织数据，进行返回
     :return:
     """
+
+    # 1. 取到当前登录用户的id
+    # user_id = session.get("user_id")
     user_id = g.user_id
 
+    # 2. 查询出指定的用户信息
     try:
         user = User.query.get(user_id)
     except Exception as e:
         current_app.logger.error(e)
-        return jsonify(errno=RET.DBERR, errmsg="查询数据错误")
+        return jsonify(errno=RET.DBERR, errmsg="查询数据失败")
 
     if not user:
-        return jsonify(errno=RET.USERERR, errmsg="用户不存在")
+        return jsonify(errno=RET.NODATA, errmsg="用户不存在")
 
+    # 3. 组织数据，进行返回
+    # resp = {
+    #     "name": user.name,
+    #     "avatar_url": user.avatar_url,
+    #     "user_id": user.id
+    # }
     return jsonify(errno=RET.OK, errmsg="OK", data=user.to_dict())
