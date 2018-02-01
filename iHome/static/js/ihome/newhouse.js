@@ -29,33 +29,64 @@ $(document).ready(function () {
 
         var params = {}
 
+        // serializeArray 会生成当前表单需要所需要提交的数据的列表
+        // {name: "", value: ""}
         $(this).serializeArray().map(function (x) {
-            params[x.name] = x.value
             // console.log(x)
+            params[x.name] = x.value
         })
+
         var facilities = []
-        $(":checkbox:checked[name=facility]").each(function (index,x) {
+
+        // 取到checkBox、取到选中的、取到name=facility
+        // map用于遍历数据列表或者对象数据
+        // each用于遍历界面上的标签元素
+        $(":checkbox:checked[name=facility]").each(function (index, x) {
             facilities[index] = x.value
         })
+
         params["facility"] = facilities
         console.log(params)
         $.ajax({
-            url:"/api/v1.0/house",
-            type:"post",
-            contentType:"application/json",
-            headers:{
-                "X-CSRFToken":getCookie("csrf_token")
+            url: "/api/v1.0/houses",
+            type: "post",
+            contentType: "application/json",
+            headers: {
+                "X-CSRFToken": getCookie("csrf_token")
             },
-            data:JSON.stringify(params),
-            success:function (resp) {
-                if (resp.errno == "0"){
+            data: JSON.stringify(params),
+            success: function (resp) {
+                if (resp.errno == "0") {
+                    // 房屋基本信息填充成功
+                    // 还需要上传房屋图片
+                    // 隐藏基本信息的表单
                     $("#form-house-info").hide()
+                    // 显示上传图片的表单
                     $("#form-house-image").show()
                     $("#house-id").val(resp.data.house_id)
                 }
             }
         })
     })
-    // TODO: 处理图片表单的数据
+    // 处理图片表单的数据
+    $("#form-house-image").submit(function (e) {
+        e.preventDefault()
+
+        $(this).ajaxSubmit({
+            url: "/api/v1.0/houses/image",
+            type: "post",
+            headers: {
+                "X-CSRFToken": getCookie("csrf_token")
+            },
+            success: function (resp) {
+                if (resp.errno == "0") {
+                    // 把上传成功的图片展示到界面上
+                    $(".house-image-cons").append('<img src="' + resp.data.image_url + '">')
+                }else {
+                    alert(resp.errmsg)
+                }
+            }
+        })
+    })
 
 })
