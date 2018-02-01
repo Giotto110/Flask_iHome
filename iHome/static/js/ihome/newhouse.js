@@ -3,7 +3,7 @@ function getCookie(name) {
     return r ? r[1] : undefined;
 }
 
-$(document).ready(function(){
+$(document).ready(function () {
     // $('.popup_con').fadeIn('fast');
     // $('.popup_con').fadeOut('fast');
 
@@ -11,12 +11,14 @@ $(document).ready(function(){
     $.get("/api/v1.0/areas", function (resp) {
         if (resp.errno == "0") {
             // 代表请求成功
-            for (var i=0; i<resp.data.length; i++) {
+            for (var i = 0; i < resp.data.length; i++) {
                 var aid = resp.data[i].aid
                 var aname = resp.data[i].aname
                 $("#area-id").append('<option value="' + aid + '">' + aname + '</option>')
             }
-        }else {
+            var html = template("areas-tmpl", {"areas": resp.data})
+            $("#area-id").html(html)
+        } else {
             alert(resp.errmsg)
         }
     })
