@@ -31,6 +31,7 @@ $(document).ready(function () {
 
         // serializeArray 会生成当前表单需要所需要提交的数据的列表
         // {name: "", value: ""}
+
         $(this).serializeArray().map(function (x) {
             // console.log(x)
             params[x.name] = x.value

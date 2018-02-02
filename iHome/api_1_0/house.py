@@ -4,6 +4,7 @@ from flask import current_app
 from flask import g
 from flask import jsonify
 from flask import request
+from flask import session
 
 from iHome import constants
 from iHome import db
@@ -12,6 +13,32 @@ from iHome.utils.response_code import RET
 from iHome.api_1_0 import api
 from iHome.models import Area, House, Facility, HouseImage
 from iHome.utils import image_storage
+
+
+@api.route('/houses/<int:house_id>')
+def get_house_detail(house_id):
+    """
+    1. 通过house_id查询指定的房屋模型
+    2. 将房屋的详细信息封装成字典
+    3. 进行返回
+    :return:
+    """
+
+    # 1. 通过house_id查询指定的房屋模型
+    try:
+        house = House.query.get(house_id)
+    except Exception as e:
+        current_app.logger.error(e)
+        return jsonify(errno=RET.DBERR, errmsg="查询数据失败")
+
+    if not house:
+        return jsonify(errno=RET.NODATA, errmsg="房屋不存在")
+    # 2. 将房屋的详细信息封装成字典
+    resp_dict = house.to_full_dict()
+
+    user_id = session.get("user_id",-1)
+    # 3. 进行返回
+    return jsonify(errno=RET.OK, errmsg="OK", data={"house": resp_dict,"user_id":user_id})
 
 
 @api.route('/houses/image', methods=["POST"])
@@ -57,8 +84,9 @@ def upload_house_image():
         current_app.logger.error(e)
         return jsonify(errno=RET.THIRDERR, errmsg="上传图片失败")
 
+    # 判断当前房屋是否设置了index_image，如果没有设置就设置
     if not house.index_image_url:
-        house.index_image_url =key
+        house.index_image_url = key
 
     # 4. 初始化房屋图片的模型
     house_image_model = HouseImage()
@@ -77,9 +105,6 @@ def upload_house_image():
 
     # 6. 返回响应-->图片的url
     return jsonify(errno=RET.OK, errmsg="上传成功", data={"image_url": constants.QINIU_DOMIN_PREFIX + key})
-
-
-
 
 
 @api.route('/houses', methods=["POST"])
@@ -111,12 +136,15 @@ def add_house():
     max_days = data_dict.get('max_days')
 
     # 2. 判断参数是否有值&参数是否符合规范
-    if not all([title, price, address, area_id, room_count, acreage, unit, capacity, beds, deposit, min_days, max_days]):
+    if not all(
+            [title, price, address, area_id, room_count, acreage, unit, capacity, beds, deposit, min_days, max_days]):
         return jsonify(errno=RET.PARAMERR, errmsg="参数错误")
 
     try:
         # 以分的形式进行保存
         price = int(float(price) * 100)
+        deposit = int(float(deposit)*100)
+
     except Exception as e:
         current_app.logger.error(e)
         return jsonify(errno=RET.PARAMERR, errmsg="参数错误")
