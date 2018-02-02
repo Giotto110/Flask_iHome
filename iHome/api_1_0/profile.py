@@ -132,6 +132,8 @@ def set_user_name():
         db.session.rollback()
         return jsonify(errno=RET.DBERR, errmsg="保存数据失败")
 
+    session["name"] = user.name
+
     # 5. 返回响应
     return jsonify(errno=RET.OK, errmsg="保存成功")
 

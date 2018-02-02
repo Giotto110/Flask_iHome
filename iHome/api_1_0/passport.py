@@ -12,6 +12,14 @@ from iHome.utils.response_code import RET
 from . import api
 
 
+@api.route("/session")
+def check_login():
+    user_id = session.get("user_id")
+    name = session.get("name")
+    return jsonify(errno=RET.OK,errmsg="OK",data={"user_id":user_id,"name":name})
+
+
+
 @api.route('/session',methods=["DELETE"])
 def logout():
 
