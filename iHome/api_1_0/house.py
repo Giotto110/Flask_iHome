@@ -57,6 +57,9 @@ def upload_house_image():
         current_app.logger.error(e)
         return jsonify(errno=RET.THIRDERR, errmsg="上传图片失败")
 
+    if not house.index_image_url:
+        house.index_image_url =key
+
     # 4. 初始化房屋图片的模型
     house_image_model = HouseImage()
 
