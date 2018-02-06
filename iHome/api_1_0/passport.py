@@ -1,7 +1,6 @@
 # -*- coding:utf-8 -*-
-import logging
+# 实现登录和注册的逻辑
 import re
-
 from flask import current_app
 from flask import request, jsonify
 from flask import session
@@ -9,72 +8,92 @@ from flask import session
 from iHome import redis_store, db
 from iHome.models import User
 from iHome.utils.response_code import RET
+
 from . import api
 
 
 @api.route("/session")
 def check_login():
+    """判断当前用户是否登录，如果登录，返回用户的id和用户的用户名"""
+
     user_id = session.get("user_id")
     name = session.get("name")
-    return jsonify(errno=RET.OK,errmsg="OK",data={"user_id":user_id,"name":name})
+    return jsonify(errno=RET.OK, errmsg="OK", data={"user_id": user_id, "name": name})
 
 
-
-@api.route('/session',methods=["DELETE"])
+@api.route('/session', methods=["DELETE"])
 def logout():
+    """执行退出操作"""
 
-    session.pop("name")
-    session.pop("user_id")
-    session.pop("mobile")
+    session.pop('name')
+    session.pop('user_id')
+    session.pop('mobile')
 
-    return jsonify(errno=RET.OK,errmsg="OK")
+    return jsonify(errno=RET.OK, errmsg="OK")
 
 
-
-@api.route("/session", methods=["POST"])
+@api.route('/session', methods=["POST"])
 def login():
     """
-    1. 获取参数和判断是否有值
-    2. 从数据库查询出指定的用户
-    3. 校验密码
-    4. 保存用户登录状态
-    5. 返回结果
+    登录逻辑
+    1. 获取参数
+    2. 校验参数
+    3. 通过mobile查询到指定的用户
+    4. 校验密码
+    5. 把当前用户相关登录信息保存到session中
+    6. 返回
     :return:
     """
 
-    # 1. 获取参数和判断是否有值
+    # 1. 获取参数
     data_dict = request.json
-
     mobile = data_dict.get("mobile")
     password = data_dict.get("password")
-
+    # 2. 校验参数
     if not all([mobile, password]):
-        return jsonify(errno=RET.PARAMERR, errmsg="参数不全")
+        return jsonify(errno=RET.PARAMERR, errmsg="参数错误")
 
-    # 2. 从数据库查询出指定的用户
+    # 校验手机号是否正确
+    if not re.match("^1[34578][0-9]{9}$", mobile):
+        return jsonify(errno=RET.PARAMERR, errmsg="请输入正确的手机号")
+
+    # 3. 通过mobile查询到指定的用户
     try:
-        user = User.query.filter_by(mobile=mobile).first()
+        user = User.query.filter(User.mobile == mobile).first()
     except Exception as e:
         current_app.logger.error(e)
-        return jsonify(errno=RET.DBERR, errmsg="查询数据错误")
+        return jsonify(errno=RET.DBERR, errmsg="数据查询失败")
 
     if not user:
-        return jsonify(errno=RET.USERERR, errmsg="用户不存在")
+        return jsonify(errno=RET.USERERR, errmsg="当前用户不存在")
 
-    # 3. 校验密码
-    if not user.check_passowrd(password):
+    # 4. 校验密码
+    if not user.check_password(password):
         return jsonify(errno=RET.PWDERR, errmsg="密码错误")
 
-    # 4. 保存用户登录状态
+    # 5. 保存用户信息到sessoin中
     session["user_id"] = user.id
     session["name"] = user.name
     session["mobile"] = user.mobile
 
-    # 5. 返回结果
+    # 6. 给出响应
     return jsonify(errno=RET.OK, errmsg="登录成功")
 
-@api.route('/users',methods=["POST"])
+
+@api.route('/users', methods=["POST"])
 def register():
+    """
+    注册逻辑
+    1. 获取参数：手机号, 短信验证码, 密码,
+    2. 取到真实的短信验证码
+    3. 进行验证码的对比
+    4. 初始化User模型，保存相关数据
+    5. 将user模型存到数据库中
+    6. 给出响应：{"errno": "0", "errmsg": "注册成功"}
+    :return:
+    """
+
+    # 1. 获取参数：手机号, 短信验证码, 密码,
     data_dict = request.json
     mobile = data_dict.get("mobile")
     phonecode = data_dict.get("phonecode")
@@ -97,24 +116,30 @@ def register():
     if phonecode != real_phonecode:
         return jsonify(errno=RET.DATAERR, errmsg="短信验证码输入错误")
 
-    #  3.1 判断当前手机是否已被注册
-    if User.query.filter(User.mobile == mobile).first:
-        return  jsonify(errno=RET.DATAEXIST,errmsg="该手机号已被注册")
+    # 3.1 判断当前手机是已经被注册
+    if User.query.filter(User.mobile == mobile).first():
+        return jsonify(errno=RET.DATAEXIST, errmsg="该手机号已被注册")
 
     # 4. 初始化User模型，保存相关数据
     user = User()
     user.mobile = mobile
     user.name = mobile
-    # save password
+    # 保存密码
     user.password = password
 
-
+    # 5. 将user模型存到数据库中
     try:
         db.session.add(user)
         db.session.commit()
     except Exception as e:
         db.session.rollback()
         current_app.logger.error(e)
-        return jsonify(errno=RET.DBERR,errmsg="保存用户数据失败")
+        return jsonify(errno=RET.DBERR, errmsg="保存用户数据失败")
 
-    return jsonify(errno=RET.OK,errmsg="注册成功")
+    # 保存当前用户信息到session
+    session["user_id"] = user.id
+    session["name"] = user.name
+    session["mobile"] = user.mobile
+
+    # 6. 给出响应：{"errno": "0", "errmsg": "注册成功"}
+    return jsonify(errno=RET.OK, errmsg="注册成功")

@@ -8,13 +8,13 @@ from iHome.libs.yuntongxun.CCPRestSDK import REST
 import ConfigParser
 
 # 主帐号
-accountSid = '8a216da8612cf2fe016141bcd356057b'
+accountSid = '8aaf07085f5c54cf015f8c1710fa0f4d'
 
 # 主帐号Token
-accountToken = 'b8abd9421e3a4539b1d17312129863ce'
+accountToken = '711b641d76b34b06ab1a1fbc07fd381c'
 
 # 应用Id
-appId = '8a216da8612cf2fe016141bcd3c00582'
+appId = '8aaf07085f5c54cf015f8c1712620f54'
 
 # 请求地址，格式如下，不需要写http://
 serverIP = 'app.cloopen.com'
@@ -60,7 +60,7 @@ class CCP(object):
 
 
 if __name__ == '__main__':
-    print CCP().send_template_sms("15605270152", ["888888", "5"], "1")
+    print CCP().send_template_sms("", ["888888", "5"], "1")
 
 
 # 发送模板短信
@@ -82,9 +82,9 @@ if __name__ == '__main__':
 #                 print '%s:%s' % (k, s)
 #         else:
 #             print '%s:%s' % (k, v)
-#
-#
-# sendTemplateSMS("15605270152", ["666666", "5"], "1")
+
+
+# sendTemplateSMS("18513174598", ["666666", "5"], "1")
 # sendTemplateSMS("18513174598", ["666666", "5"], "1")
 # sendTemplateSMS("18513174598", ["666666", "5"], "1")
 # sendTemplateSMS("18513174598", ["666666", "5"], "1")

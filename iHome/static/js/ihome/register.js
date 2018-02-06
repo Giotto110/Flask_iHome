@@ -72,7 +72,7 @@ function sendSMSCode() {
             if (resp.errno == "0") {
                 // 代表发送成功
                 // 进行倒计时
-                var num = 60
+                var num = 10
 
                 var t = setInterval(function () {
                     if (num ==0) {

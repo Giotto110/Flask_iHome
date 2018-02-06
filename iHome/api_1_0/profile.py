@@ -5,34 +5,58 @@ from flask import request
 from flask import session
 
 from iHome import db
-from iHome.models import User
+from iHome.models import User,House
 from iHome import constants
-from iHome.utils.commons import login_required
+from iHome.utils.common import login_required
 from iHome.utils.response_code import RET
 from iHome.utils.image_storage import upload_image
 from . import api
+
+@api.route('/user/houses')
+@login_required
+def get_user_houses():
+    '''查询当前用户发布的所有房屋'''
+
+    try:
+        houses = House.query.filter(House.user_id == g.user_id).all()
+    except Exception as e:
+        current_app.logger.error(e)
+        return jsonify(errno=RET.DBERR,errmsg="查询失败")
+
+    house_dict_li = []
+
+    for house in houses:
+        house_dict_li.append(house.to_basic_dict())
+
+    return jsonify(errno=RET.OK,errmsg="OK",data=house_dict_li)
 
 
 @api.route('/user/auth')
 @login_required
 def get_user_auth():
+    """
+    获取用户的实名认证信息
+    :return:
+    """
+    # 1. 查询出当前用户的模型
     user_id = g.user_id
 
     try:
         user = User.query.get(user_id)
     except Exception as e:
         current_app.logger.error(e)
-        return jsonify(errno=RET.DBERR,errmsg="查询数据失败")
+        return jsonify(errno=RET.DBERR, errmsg="查询数据失败")
 
     if not user:
-        return jsonify(error=RET.NODATA,errmsg="用户不存在")
+        return jsonify(errno=RET.NODATA, errmsg="用户不存在")
+
+    # 2. 封装响应
 
     resp = {
-        "real_name":user.real_name,
-        "id_card":user.id_card
+        "real_name": user.real_name,
+        "id_card": user.id_card
     }
-
-    return jsonify(errno=RET.OK,errmsg="ok",data=resp)
+    return jsonify(errno=RET.OK, errmsg="OK", data=resp)
 
 
 @api.route('/user/auth', methods=["POST"])
@@ -86,9 +110,6 @@ def set_user_auth():
     return jsonify(errno=RET.OK, errmsg="保存成功")
 
 
-
-
-
 @api.route('/user/name', methods=["POST"])
 @login_required
 def set_user_name():
@@ -131,9 +152,8 @@ def set_user_name():
         current_app.logger.error(e)
         db.session.rollback()
         return jsonify(errno=RET.DBERR, errmsg="保存数据失败")
-
+    # 更新session中保存的用户名
     session["name"] = user.name
-
     # 5. 返回响应
     return jsonify(errno=RET.OK, errmsg="保存成功")
 

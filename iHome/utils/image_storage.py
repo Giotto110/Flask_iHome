@@ -18,6 +18,7 @@ def upload_image(data):
     q = qiniu.Auth(access_key, secret_key)
     token = q.upload_token(bucket_name)
     ret, info = qiniu.put_data(token, None, data)
+    print ret,info
     # 判断如果上传成功，那么就返回key
     if info.status_code == 200:
         return ret.get("key")

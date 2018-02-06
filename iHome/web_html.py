@@ -8,6 +8,7 @@ html = Blueprint("html", __name__)
 
 # http://127.0.0.1:5000/index.html
 # http://127.0.0.1:5000/favicon.ico
+# http://127.0.0.1:5000/orders/1/comment
 @html.route('/<re(".*"):file_name>')
 def get_html_file(file_name):
     if not file_name:

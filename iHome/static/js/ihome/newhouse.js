@@ -3,7 +3,7 @@ function getCookie(name) {
     return r ? r[1] : undefined;
 }
 
-$(document).ready(function () {
+$(document).ready(function(){
     // $('.popup_con').fadeIn('fast');
     // $('.popup_con').fadeOut('fast');
 
@@ -11,14 +11,16 @@ $(document).ready(function () {
     $.get("/api/v1.0/areas", function (resp) {
         if (resp.errno == "0") {
             // 代表请求成功
-            for (var i = 0; i < resp.data.length; i++) {
-                var aid = resp.data[i].aid
-                var aname = resp.data[i].aname
-                $("#area-id").append('<option value="' + aid + '">' + aname + '</option>')
-            }
+            // for (var i=0; i<resp.data.length; i++) {
+            //     var aid = resp.data[i].aid
+            //     var aname = resp.data[i].aname
+            //     $("#area-id").append('<option value="' + aid + '">' + aname + '</option>')
+            // }
+            // 通过模板生成要显示的html
             var html = template("areas-tmpl", {"areas": resp.data})
+            // 设置到指定的标签里面
             $("#area-id").html(html)
-        } else {
+        }else {
             alert(resp.errmsg)
         }
     })
@@ -30,8 +32,7 @@ $(document).ready(function () {
         var params = {}
 
         // serializeArray 会生成当前表单需要所需要提交的数据的列表
-        // {name: "", value: ""}
-
+        // [{name: "", value: ""}, {name: "", value: ""}]
         $(this).serializeArray().map(function (x) {
             // console.log(x)
             params[x.name] = x.value
@@ -64,11 +65,13 @@ $(document).ready(function () {
                     $("#form-house-info").hide()
                     // 显示上传图片的表单
                     $("#form-house-image").show()
+                    // 设置图片表单中要上传房屋id
                     $("#house-id").val(resp.data.house_id)
                 }
             }
         })
     })
+
     // 处理图片表单的数据
     $("#form-house-image").submit(function (e) {
         e.preventDefault()

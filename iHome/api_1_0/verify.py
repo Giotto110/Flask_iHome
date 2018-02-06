@@ -51,11 +51,11 @@ def send_sms_code():
     except Exception as e:
         current_app.logger.error(e)
         return jsonify(errno=RET.DBERR, errmsg="查询验证码出错")
-
+    
     # 如果没有到，代表验证码过期
     if not real_image_code:
         return jsonify(errno=RET.NODATA, errmsg="验证码已过期")
-
+        
     # 4. 进行验证码的对比，如果用户输入的验证码与真实的验证码一样
     if image_code.lower() != real_image_code.lower():
         return jsonify(errno=RET.DATAERR, errmsg="验证码输入不正确")
@@ -64,10 +64,10 @@ def send_sms_code():
     sms_code = "%06d" % random.randint(0, 999999)
     current_app.logger.debug("短信验证码为：" + sms_code)
     # 6. 发送短信
-    result = CCP().send_template_sms(mobile, [sms_code, constants.SMS_CODE_REDIS_EXPIRES / 60], "1")
-    if result != 1:
-        # 发送短信失败
-        return jsonify(errno=RET.THIRDERR, errmsg="发送短信失败")
+    # result = CCP().send_template_sms(mobile, [sms_code, constants.SMS_CODE_REDIS_EXPIRES / 60], "1")
+    # if result != 1:
+    #     # 发送短信失败
+    #     return jsonify(errno=RET.THIRDERR, errmsg="发送短信失败")
 
     # 7. 保存短信验证到redis中
     try:
